@@ -23,7 +23,7 @@ def exec_main():
     HostSystemBuilder.defineBootSupport()
     Runtime.Smalltalk.defineAs(UniqueString._for("HasGUI"), Obj.FALSE)
     ref = SourcecodeRef.create('jar:/source/bootstrap.utf.txt', Exec)
-    Simulator_evaluateAll(ref)
+    simulator_evaluateAll(ref)
 
 if __name__ == '__main__':
     exec_main()
