@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import json
 import os
 os.environ['CLASSPATH'] = 'st76a9.jar'
 from jnius import autoclass
@@ -186,6 +187,10 @@ class Context:
             return self
         raise Exception("primitive implementation not finished")
 
+class EscapeAll(bytes):
+    def __str__(self):
+        return 'b\'{}\''.format(''.join('\\x{:02x}'.format(b) for b in self))
+
 def simulator_evaluate(expression):
     altoSource = Transcoder.toAlto("doIt [^[" + expression + "]]")
     objectCls = Runtime.Smalltalk._ref(UniqueString._for("Object"))
@@ -195,18 +200,26 @@ def simulator_evaluate(expression):
     result = Simulator(Context(None, None, objectCls, method)).run()
     print(expression, "=>", result)
 
-def simulator_jevaluate(expression):
-    altoSource = Transcoder.toAlto("doIt [^[" + expression + "]]")
+def simulator_jevaluate(source, evaluation_list):
+    evaluation_dictionary = {}
+    evaluation_list.append(evaluation_dictionary)
+    evaluation_dictionary['source'] = str(source.encode('ascii', 'backslashreplace'))
+    altoSource = Transcoder.toAlto("doIt [^[" + source + "]]")
+    evaluation_dictionary['alto_source'] = altoSource
+    evaluation_dictionary['lexem'] = ByteString(altoSource).asVector().toString()
+    evaluation_dictionary['lexem'] = ([each if isinstance(each, int)else each.toString() for each in ByteString(altoSource).asVector().elements()])
     objectCls = Runtime.Smalltalk._ref(UniqueString._for("Object"))
     method_tuple = Compiler().compileIn(ByteString(altoSource), objectCls)
+    evaluation_dictionary['selector'] = method_tuple._ref(Integer(1)).toString()
+    evaluation_dictionary['codes '] = str(EscapeAll(bytes(method_tuple._ref(Integer(2)).codes().fBytes)))
     method = method_tuple._ref(Integer(2))
     return Simulator(JContext().set(None, Obj.NIL, objectCls, method)).run()
 
-def simulator_evaluateAll(fileRef):
+def simulator_evaluateAll(fileRef, evaluation_list=[]):
     ci = fileRef.chunks()
     while ci.hasMoreChunks():
         chunk = ci.nextChunk()
-        simulator_jevaluate(chunk)
+        simulator_jevaluate(chunk, evaluation_list)
 
 def exec_main():
     Runtime.initialize()
@@ -214,7 +227,10 @@ def exec_main():
     HostSystemBuilder.defineBootSupport()
     Runtime.Smalltalk.defineAs(UniqueString._for("HasGUI"), Obj.FALSE)
     ref = SourcecodeRef.create('jar:/source/bootstrap.utf.txt', Exec)
-    simulator_evaluateAll(ref)
+    evaluation_list = []
+    simulator_evaluateAll(ref, evaluation_list)
+    with open('evaluation.json', 'w') as json_file:
+        json.dump(evaluation_list, json_file, indent=4)
     ref = SourcecodeRef.create('jar:/source/bench.utf.txt', Exec)
     simulator_evaluateAll(ref)
     simulator_evaluate('3 + 4')
