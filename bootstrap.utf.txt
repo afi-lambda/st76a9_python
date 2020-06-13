@@ -1,0 +1,273 @@
+"TheNewImprovedSMALLTALKSystemDefinitionJune 12, 1977
+"
+
+"UTF-8 encoding, chunks are paragraphs separated by empty lines -- hh 30jan04"
+"note that the class definition doits are intentionally commented out."
+
+Host load: 'jar:/source/preboot.utf.txt'
+
+Host let: HostReflector understand: #writeOnly
+	via: (Host method: 'writeOnly' in: (Host class: 'st76.tools.Console')).
+Smalltalk define: #user as: Host writeOnly.	"to Transcript"
+
+Host let: Console understand: #flush
+	via: (Host method: 'flush' in: Console)
+
+"RAW MATERIALS"
+
+HasGUI? [user show: 'Object, '; flush].
+
+"Class new title: 'Object';	subclassof: nil;	abstract"
+"Object is the superclass of all classes.  It is an abstract class, meaning that it has no instance state, and its main function is to provide a foundation message protocol for its subclasses.  Three instances of this class are defined, namely: nil, true, and false.""primitives"Object understands: '≡ x [] primitive: 4	"test for identical pointers"'.Object understands: 'hash [] primitive: 46	"pointer as an Integer"'.Object understands: 'asOop [] primitive: 46	"Dont override this"'.Object understands: 'refct [] primitive: 45	"current reference count"'.Object understands: 'class [] primitive: 27	"class of this object"'.Object understands: 'instfield: n [] primitive: 38	"subscript any object"'.Object understands: 'instfield: n ← val [] primitive: 39'."boolean connectives"Object understands: 'or: x [self⇒[⇑true] ⇑x]'.Object understands: 'and: x [self⇒[⇑x] ⇑false]'.Object understands: 'xor: x [x⇒[⇑self≡false] ⇑self]'.Object understands: 'eqv: x [x⇒[⇑self] ⇑self≡false]'."following don't evaluate their arg unless necessary.They are built for comfort, not for speed."Object understands: 'or% x [self⇒[⇑true] ⇑x eval]'.Object understands: 'and% x [self⇒[⇑x eval] ⇑false]'."default protocol"Object understands: 'printon: strm	[self≡nil⇒ [strm append: ''nil'']	self≡false⇒ [strm append: ''false'']	self≡true⇒ [strm append: ''true'']	self class print: self on: strm]'.Object understands: 'asString | strm	[strm ← Stream default.	self printon: strm. ⇑strm contents]'.Object understands: 'print	[user show: self asString]'.
+Object understands: '= x [⇑self≡x]'.Object understands: '≠ x [⇑self=x≡false]'.Object understands: 'is: x [⇑self class≡x]'.
+Object understands: ', x | v	[v ← Vector new: 2.	v•1 ← self. v•2 ← x.  ⇑v]'.
+Object understands: 'startup		"loopless scheduling"	[self firsttime⇒		[while% self eachtime do% [].		⇑self lasttime]	⇑false]'.
+Object understands: 'canunderstand: selector	[⇑self class canunderstand: selector]'.
+Object understands: 'copy		"create new copy of self"	[⇑self class copy: self]'.Object understands: 'recopy	"recursively copy whole structure"	[⇑self class recopy: self]'.
+Object understands: 'error	[user notify: ''Message not understood.'']'.
+Object understands: 'its: code	"´s"	[self class understands: ''doit [⇑['' + code + '']]''.	⇑self doit]'.
+"FUNDAMENTAL ORGANIZATION"
+
+HasGUI? [user show: 'Class, '; flush].
+
+"Class new title: 'Class';	fields: 'title	""<String> for identification, printing""		myinstvars ""<String> partnames for compiling, printing (includes comments)""		instsize ""<Integer> for storage management""		messagedict ""<MessageDict> for communication, compiling""		monitors ""<Dictionary/nil> compiler checks here""		superclass ""<Class> for execution of inherited behavior""		environment ""<Vector of SymbolTables> for external references""		fieldtype ""<Integer> encodes field size, if bits""';	veryspecial: 1""order of messages, just to make things simpler:	title insystem subclassof fields/abstract (required)	sharing bytesize veryspecial (any order)"
+Class understands: 'title: title	[self title: title insystem: Smalltalk]'.Class understands: 'title: title insystem: system	[system define: title unique as: self.	superclass ← Object]'.Class understands: 'subclassof: superclass'.Class understands: 'abstract	[self fields: nullString]'.Class understands: 'fields: myinstvars		"list of instance variables"	[fieldtype ← 16.	instsize ← self instvars length.	instsize>16⇒		[user notify: ''too many instance variables'']	messagedict ← MessageDict default.	environment ← Vector new: 1. environment•1 ← Smalltalk]'.
+
+Class understands: 'instvars	[superclass≡nil ⇒ [⇑myinstvars asVector]	⇑superclass instvars concat: myinstvars asVector]'.
+"Class understands: 'understands: code		""install method""	[Compiler new compile: code in: self]'."
+Class understands: 'canunderstand: selector	[⇑messagedict has: selector]'.Class understands: 'derstands: selector	[messagedict ← messagedict delete: selector]'.Class understands: 'install: name method: method literals: literals		code: code backpointers: backpointers	[ "[messagedict has: name⇒ [CodeKeeper next← messagedict literals: name]]."	messagedict ← messagedict insert: name method: method		literals: literals code: code backpointers: backpointers]'.Class understands: 'code: selector	[⇑messagedict code: selector]'.
+
+Class understands: 'new [] primitive: 28'.	"creation of instances"
+
+Class understands: 'printon: strm	[strm append: title]'.
+
+Class understands: 'allinstances [] primitive: 60	"enumeration"
+	"If Ted cant do it, nobody can..."'.		Class understands: 'bytesize: n	"non-pointer declaration"	[fieldtype ← 32+ [n=8⇒ [8] 16]]'.	"vanilla or chocolate only"Class understands: 'veryspecial: n		"for ClassClasses"	[instsize ← instsize+n]'.		"secret freelist fields"Class understands: 'superclass [⇑superclass]'.Class understands: 'environment [⇑environment]'.
+
+Class understands: 'print: inst on: strm | ivars i	[ivars ← self instVars.		"hh, was: myinstvars asVector"	strm append: ''(''; append: title; append: '' new ''.	for% i to: instsize do%		[strm append: ivars•i; append: '': '';			print: (inst instfield: i); space]	strm append: '')'']'.
+
+Class understands: 'init		"init and default get propagated to instances"	[⇑self new init]'.Class understands: 'default	[⇑self new default]'.
+
+Class understands: 'copy: inst | t i	[t ← self new.	for% i to: instsize do%		[t instfield: i ← inst instfield: i]	⇑t]'.Class understands: 'recopy: inst | t i	[t ← self new.	for% i to: instsize do%		[t instfield: i ← (inst instfield: i) recopy]	⇑t]'.
+
+"
+Class understands: 'ed: selector | c s	[c← self code: selector. user clearshow: c.	while% (s← user request: ''substitute: '') do%		[c ← c subst: s for: (user request: ''for: '').		user clearshow: c]	self understands: c]'.
+"
+
+HasGUI? [user show: 'VariableLengthClass, '; flush].
+
+"Class new title: 'VariableLengthClass';	subclassof: Class;	fields: '';	veryspecial: 20"
+VariableLengthClass understands: 'new: length	[length ≥ 020000 ⇒[length print. user notify: '' is too large'']	length < 0 ⇒[length print. user notify: '' is too small'']	⇑self new: length asInteger] primitive: 29'.VariableLengthClass understands: 'new	[user notify: ''use new: <Integer=length> here.'']'.
+VariableLengthClass understands: 'copy: inst | t i	[t ← self new: inst length.	for% i to: inst length do%		[t•i ← inst•i]	⇑t]'.VariableLengthClass understands: 'recopy: inst | t i	[t ← self new: inst length.	for% i to: inst length do%		[t•i ← (inst•i) recopy]	⇑t]'.
+
+HasGUI? [user show: 'Context, '; flush].
+
+"Class new title: 'Context';	fields: 'sender ""<Context> from which this message was sent""		receiver ""<Object> to which this message was sent""		mclass ""<Class> in which a method was found""		method ""<String>, the encoded method""		tempframe ""<Vector> to hold temporaries and a stack""		pc ""<Integer> marks progress of execution in method""		stackptr ""<Integer> offset of stack top in tempframe""'"
+Context understands: 'eval [] primitive: 30'.
+Context understands: 'sender: sender receiver: receiver mclass: mclass		method: method tempframe: tempframe pc: pc stackptr: stackptr'.Context understands: 'remoteCopy	[⇑Context new sender: sender receiver: receiver mclass: mclass		method: method tempframe: tempframe pc: pc+2 stackptr: stackptr]'.
+Context understands: 'sender [⇑sender]'.Context understands: 'sender← sender []'.
+Context understands: 'printon: strm	[receiver class printon: strm. sender≡nil⇒ []		strm append: ''•''; print: sender thisop]'.Context understands: 'trace | strm a	[strm ← Stream default. self printon: strm.	a ← sender. until% a≡nil do%		[strm cr. a printon: strm. a ← a sender]	⇑strm contents]'.Context understands: 'thisop | a	[a ← method•pc.	a≥0320⇒ [⇑self litof: a-0320]	a≥0260⇒ [⇑self specialops•(1+a-0260)]	⇑☞something]'.Context understands: 'litof: a	[⇑(method word: a+4) asObject]'.
+
+Context understands: 'specialops	[⇑☞(+ - < > ≤ ≥ = ≠		* / \ | min: max: land: lor:		• x next x length ≡ nil nil		class and: or: new new: to: oneToMeAsStream asStream)]'.
+
+"-- correct two unquotable symbols later:
+Context new specialops•18 ← '•←' unique.
+Context new specialops•20 ← 'next←' unique."
+
+"Context understands: 'debug | t	[user cr. self print.	while% [t ← user request: ''*''] do% [user show: (self’s t) asString]]'.
+"
+
+"NUMBERS"
+
+HasGUI? [user show: 'Number, '; flush].
+
+"Class new title: 'Number';	abstract"		"Numbers in general"
+Number understands: 'min: arg	[self>arg⇒[⇑arg]]'.Number understands: 'max: arg	[self<arg⇒[⇑arg]]'.
+
+"Number understands: '⊡ y	[⇑Point new x: self y: y]'.
+"
+Number understands: 'to: x	[⇑Interval new from: self to: x by: 1]'.Number understands: 'to: x by: y	[⇑Interval new from: self to: x by: y]'.
+Number understands: 'subscripts: a	[⇑a•self asInteger]'.Number understands: 'subscripts: a ← val	[⇑a•self asInteger ← val]'.
+
+HasGUI? [user show: 'Integer, '; flush].
+
+"Class new title: 'Integer';			""16-bit integers""	subclassof: Number;	fields: '';	bytesize: 16;	veryspecial: 1"		"instance state not currently accessible"
+Integer understands: '+ arg	[⇑self + arg asInteger] primitive: 6'.Integer understands: '- arg	[⇑self - arg asInteger] primitive: 7'.Integer understands: '* arg	[⇑self * arg asInteger] primitive: 21'.Integer understands: '/ arg	[⇑self / arg asInteger] primitive: 22'.
+Integer understands: '< arg	[⇑self < arg asInteger] primitive: 8'.Integer understands: '= arg	[⇑self = arg asInteger] primitive: 9'.Integer understands: '> arg	[⇑self > arg asInteger] primitive: 10'.Integer understands: '≤ arg	[⇑self ≤ arg asInteger] primitive: 11'.Integer understands: '≠ arg	[⇑self ≠ arg asInteger] primitive: 12'.Integer understands: '≥ arg	[⇑self ≥ arg asInteger] primitive: 13'.
+Integer understands: 'lshift: arg	[⇑self lshift: arg asInteger] primitive: 25'.Integer understands: 'land: arg	[⇑self land: arg asInteger] primitive: 23'.Integer understands: 'lor: arg	[⇑self lor: arg asInteger] primitive: 24'.Integer understands: 'xor: arg	[⇑self xor: arg asInteger] primitive: 35'.
+Integer understands: 'field: fld	[⇑self field: fld asInteger] primitive: 36'.Integer understands: 'field: fld ← val	[⇑self field: fld asInteger ← val asInteger] primitive: 37'.
+Integer understands: '\ arg	"mod"	[⇑self \ arg asInteger] primitive: 26'.Integer understands: '| arg	"truncate"	[⇑self/arg*arg]'.
+Integer understands: 'printon: strm	[self<0⇒[strm append: ''‾''. (0-self) absprinton: strm]	self absprinton: strm]'.Integer understands: 'absprinton: strm | rem	[rem ← self\10.	[self>9⇒ [self/10 absprinton: strm]].	strm next ← rem+060]'.
+Integer understands: 'asInteger [⇑self]'.Integer understands: 'asFloat [] primitive: 34'.
+Integer understands: 'oneToMeAsStream		"used by for-loops"	[⇑Stream new of: (Interval new from: 1 to: self by: 1)]'.
+Integer understands: 'copy [⇑self]'.Integer understands: 'recopy [⇑self]'.
+Integer understands: 'isletter	[self ≥ 0141⇒	" a "		[⇑self ≤ 0172]	" z "	self ≥ 0101⇒	" A "		[⇑self ≤ 0132]	" Z "	⇑false]'.Integer understands: 'isdigit 	[self ≥ 060⇒	" 0 "		[⇑self ≤ 071]	" 9 "	⇑false]'."Following two must be failures from Array subscripting: "Integer understands: 'subscripts: a	[user notify: ''Subscript out of bounds: '' + self asString]'.Integer understands: 'subscripts: a ← val	[user notify: ''Subscript out of bounds: '' + self asString]'.Integer understands: 'purge [] primitive: 44'.	"write this oop to disk"	"Warning: The Surgeon General has determined that the following message	may be hazardous to the health of your system."Integer understands: 'asObject [] primitive: 81'.	"makes a pointer"
+
+HasGUI? [user show: 'Float, '; flush].
+
+"Class new title: 'Float';		""Floating-Point""	subclassof: Number;	fields: '';	bytesize: 16;	veryspecial: 3"		"instance state not currently accessible"
+Float understands: '+ arg	[⇑self+arg asFloat] primitive: 67'.Float understands: '- arg	[⇑self-arg asFloat] primitive: 68'.Float understands: '* arg	[⇑self*arg asFloat] primitive: 69'.Float understands: '/ arg	[⇑self/arg asFloat] primitive: 70'.
+Float understands: '< arg	[⇑self<arg asFloat] primitive: 71'.Float understands: '= arg	[⇑self=arg asFloat] primitive: 72'.Float understands: '≤ arg	[⇑self≤arg asFloat] primitive: 73'.Float understands: '> arg	[⇑self>arg asFloat] primitive: 74'.Float understands: '≥ arg	[⇑self≥arg asFloat] primitive: 75'.Float understands: '≠ arg	[⇑self≠arg asFloat] primitive: 76'.
+Float understands: 'fpart [] primitive: 77'.Float understands: 'ipart	[⇑self-self fpart]
+	"NOTE this isnt an Integer"'.Float understands: 'asInteger [] primitive: 78
+	"this IS an Integer"'.	
+Float understands: 'sqrt [] primitive: 79'.Float understands: 'ipow: x		"fixed powers in log n steps"	[x=0⇒ [⇑1.0]	x=1⇒ [⇑self]	x>1⇒ [⇑((self*self) ipow: x/2)*(self ipow: x\2)]	⇑1.0/(self ipow: 0-x)]'.
+Float understands: 'epart: base | x	"gives floor log.base self"	[self<base⇒ [⇑0]		"self assumed positive"	self<(base*base)⇒ [⇑1]	x ← 2*(self epart: base*base).	"binary recursion like ipow"	⇑x + ((self/(base ipow: x)) epart: base)]'.Float understands: 'printon: strm	[self<0.0⇒ [strm append: ''‾''. (0.0-self) absprinton: strm]	self absprinton: strm]'.Float understands: 'absprinton: strm | x y q i fuzz	[fuzz ← 5.0e‾9.			"fuzz tracks significance"	y ← [self<1.0⇒ [0-(10.0/self epart: 10.0)] self epart: 10.0].	x ← self/(10.0 ipow: y)+fuzz.			"normalize x"	[x≥10.0⇒ [y ← y+1. x ← x/10.0]].	"y = exponent"	[y<6 and: y>‾4⇒		[q ← 0.			"decimal notation"		y<0⇒ [strm append: ''0.0000''•(1 to: 1-y)]		fuzz ← fuzz * (10.0 ipow: y)].	q ← y. y ← 0].		"scientific notation"	for% i to: 9 do%		[strm next ← 060+x ipart.		x ← 10.0 * x fpart.		0>(y ← y-1)⇒			[x<(fuzz ← fuzz*10.0)⇒["done - fix"]			y=‾1⇒ [strm append: ''.'']]]	[y=‾1⇒[strm append: ''.0'']].	q≠0⇒[strm append: ''e''; print: q]]'.
+Float understands: 'asFloat'.
+Float understands: 'copy [⇑self]'.Float understands: 'recopy [⇑self]'.
+
+"ARRAYS"
+
+HasGUI? [user show: 'Array, '; flush].
+
+"Class new title: 'Array';	abstract"			"arrays in general"
+Array understands: 'length [] primitive: 16'.Array understands: '• x	[⇑x subscripts: self] primitive: 38'.Array understands: '• x ← val	[⇑x subscripts: self ← val] primitive: 39'."Note that subscripting by an integer is primitive.  A subscript of another class will be called with the message subscripts: array, in the hopes that it knows how to behave as a subscript."
+Array understands: 'subscripts: x			"subarrays"	[⇑Substring new data: x map: self]'.Array understands: 'subscripts: x ← val		"subrange replacement"	[self length≠val length⇒		[user notify: ''lengths not commensurate'']	val copyto: (Substring new data: x map: self).	⇑val]'.
+Array understands: 'all ← val | i	[for% i to: self length do%		[self•i ← val]]'.
+Array understands: '= arg | x	[self length ≠ arg length⇒ [⇑false]	for% x to: self length do% 		[(self•x) = (arg•x)⇒ [] ⇑false]	⇑true]'.
+Array understands: 'find: x | i	[for% i to: self length do%		[self•i=x⇒ [⇑i]].	⇑0]'.Array understands: 'findnon: x | i	[for% i to: self length do%		[self•i≠x⇒ [⇑i]].	⇑0]'.Array understands: 'has: x	[⇑0≠(self find: x)]'.
+Array understands: 'reverse		[⇑Substring new data: self map: (self length to: 1 by: ‾1)]'.Array understands: 'concat: arg | x	[x ← self species new: self length + arg length.	x•(1 to: self length) ← self.	x•(self length+1 to: x length) ← arg.  ⇑x]'.
+Array understands: 'copy	[⇑self copyto: (self species new: self length)]'.Array understands: 'copyto: t | i s	[s ← t asStream.	for% i from: self do%		[s next← i]	⇑t]'.
+
+Array understands: 'replace: a to: b by: s | x t	[x ← self species new: self length+s length -(1+b-a).	x•(1 to: a-1) ← self•(1 to: a-1).  t←a+s length-1.	x•(a to: t) ← s.	x•(t+1 to: x length) ← self•(b+1 to: self length).	⇑x]'.
+
+Array understands: 'growby: n	[⇑self copyto: (self species new: self length+n)]'.Array understands: 'grow	[⇑self copyto: (self species new: (4 max: self length*2))]'.
+
+Array understands: 'last	[⇑self•self length]'.Array understands: 'last ← val	[⇑self•self length ← val]'.
+Array understands: 'species	[⇑Vector]'.
+Array understands: 'read	[⇑self new asStream read]'.Array understands: 'asStream	[⇑Stream new of: self]'.Array understands: 'isIntervalBy1	[⇑false]'.
+
+Array understands: 'swap: i with: j | t	[t ← self•i. self•i ← self•j. self•j ← t]'.
+
+HasGUI? [user show: 'Vector, '; flush].
+
+"VariableLengthClass new title: 'Vector';	subclassof: Array"		"Array of objects"
+Vector understands: ', x | v	[v ← self growby: 1.	"use a stream if youre in a hurry"	v last ← x. ⇑v]'.Vector understands: 'printon: strm | i	[strm append: ''(''.	for% i to: self length-1 do%		[strm print: self•i; append: '', ''].	[self length≥1⇒[strm print: self last]].		"hh: allow empty Vectors"	strm append: '')'' ]'.
+
+HasGUI? [user show: 'String, '; flush].
+
+"VariableLengthClass new title: 'String';	subclassof: Array;	bytesize: 8"		"Array of 8-bit bytes"
+String understands: 'word: x		"read word in String"	[⇑self•(2*x) + (self•(2*x-1) lshift: 8)]'.String understands: 'word: x ← y		"write word in String"	[self•(2*x) ← y land: 0377.	self•(2*x-1) ← y lshift: ‾8. ⇑y]'.
+String understands: 'printon: strm | x	"print inside string quotes"	[strm next← 047.	for% x from: self do%		[strm next← x.		x=047⇒[strm next← x]]		"imbedded quotes get doubled"	strm next← 047]'.
+String understands: 'species	[⇑String]'.String understands: 'asVector	[⇑self asStream asVector]'.
+
+"String understands: 'asParagraph	[⇑Paragraph new text: self alignment: 0]'."
+String understands: 'recopy	[⇑self copy]'.
+String understands: 'subst: repl for: key | key1 i nskip result	[nskip ← 0. key1 ← key•1. result ← Stream default.	for% i to: self length do%		" the Boyer Slow string replacement "		[nskip>0⇒ [nskip ← nskip-1]		self•i = key1⇒			[self•(i to: (self length min: i+key length-1)) = key⇒				[result append: repl. nskip ← key length-1]			result next← self•i]		result next← self•i]	⇑result contents]'.
+String understands: 'unique | u		"copy and intern"	[u ← UniqueString new: self length.	⇑u of: self]'.String understands: 'hash | x h		"not great, but compatible with FT atom hashing"	[h ← 13131.	for% x from: self do%		[h ← x * h.		h ← (h lshift: ‾1)+(h lshift: 15) land: 65535 "hh, keep 16 bits"]	⇑h]'.
+
+String understands: '+ s [^self concat: s]	"hh, smuggled in"'
+
+HasGUI? [user show: 'UniqueString, '; flush].
+
+"VariableLengthClass new title: 'UniqueString';	subclassof: String;	bytesize: 8"		"allows fast compare (eq) for tables"
+UniqueString understands: 'of: s | i a v 	[a ← self intern: s hash: (i←s hash)⇒ [⇑a]	i ← 1+(i lshift: ‾8).	v ← USTable•i.	USTable•i ← Vector new: 2*v length.		"grow that hash bucket"	for% a from: v do%		"copy all its contents"		[a≡nil⇒ []		self intern: a hash: a stringhash]	⇑self of: s]'.		"and try again... "UniqueString understands: 'intern: s hash: h| i j v n	[v ← USTable•(1+(h lshift: ‾8)).	for% i to: v length do%		"interning compatible with FT atoms - change it soon"		[h ← h\v length+1.		v•h≡nil⇒		"empty slot"			[s is: UniqueString⇒ [⇑v•h ← s]		"(when growing)"			n← 0.  for% j from: v do%				[j≡nil⇒ [n ← n+1]]		"count # empty slots"			4*n < v length⇒[⇑false]	"grow if not 1/4 "			for% j to: s length do%		"copy string"				[super•j ← s•j]	"where there-s a will there-s a way"			⇑v•h ← self]		"and install self as the atom"		s=(v•h)⇒[⇑v•h]]	user notify: ''USTable jammed (UniqueString)'']'.UniqueString understands: 'stringhash	[⇑super hash]'.
+UniqueString understands: '•x ← val	[user notify: ''UniqueStrings are not for writing into'']'.
+UniqueString understands: 'printon: strm	[strm append: self]'.
+UniqueString understands: 'isinfix		"one-char non-alpha"	[self length≠1⇒ [⇑false]  ⇑(self•1) isletter≡false]'.UniqueString understands: 'iskeyword | x	"ends with open or closed colon"	[self length≤1⇒ [⇑false]	x ← self•self length.	x=072⇒[⇑true] ⇑x=03]'.UniqueString understands: 'isuneval		"ends with open colon"	[⇑self•self length=03]'.
+UniqueString understands: '= x [⇑self≡x]'.	"pointer compare"UniqueString understands: 'hash [] primitive: 46'.	"just the object pointer"UniqueString understands: 'unique'.
+
+HasGUI? [user show: 'Substring, '; flush].
+
+"Class new title: 'Substring';	subclassof: Array;	fields: 'data map'"		"Substrings and permutations"
+Substring understands: 'data: data map: map'.
+
+Substring understands: '• x	[⇑data•(map•x)]'.Substring understands: '• x ← val	[⇑data•(map•x) ← val]'.
+Substring understands: 'length	[⇑map length]'.Substring understands: 'species	[⇑data species]'.
+
+Substring understands: 'asStream	[map isIntervalBy1⇒	"direct stream for simple substrings"		[⇑Stream new of: data from: map start to: map stop]	⇑Stream new of: self from: 1 to: map length]'.
+
+HasGUI? [user show: 'Interval, '; flush].
+
+"Class new title: 'Interval';	subclassof: Array;	fields: 'start stop step length'."	"Intervals - Integer or Float"
+Interval understands: 'from: start to: stop by: step	[length ← 1+(stop-start/step)]'.
+Interval understands: '• x	[x<1⇒ [⇑nil]	x>length⇒ [⇑nil]	⇑start+(x-1*step)]'.Interval understands: '• x ← val	[user notify: ''Intervals are not for writing into'']'.Interval understands: 'length [⇑length]'.
+Interval understands: 'isIntervalBy1	[⇑step=1]'.Interval understands: 'start [⇑start]'.Interval understands: 'stop [⇑stop]'.
+
+"STREAMS"
+
+HasGUI? [user show: 'Stream, '; flush].
+
+"Class new title: 'Stream';	fields: 'array position limit'"
+Stream understands: 'of: array	[position ← 0. limit ← array length]'.Stream understands: 'of: array from: position to: limit	[position ← position-1]'.Stream understands: 'default	[self of: (String new: 8)]'.
+Stream understands: 'next	"simple result"	[self myend⇒ [⇑self pastend]	⇑array•(position ← position+1)] primitive: 17'.Stream understands: 'next ← x		"simple arg"	[self myend⇒ [⇑self pastend ← x]	⇑array•(position ← position+1) ← x] primitive: 18'.
+Stream understands: 'append: x | i	"Array arg"	[for% i from: x do%		[self next ← i].	⇑x]'.Stream understands: 'myend	[⇑position≥limit]'.Stream understands: 'pastend	[⇑false]'.Stream understands: 'pastend ← x	[array ← array grow. limit ← array length.	⇑self next ← x]'.
+Stream understands: 'into: x | i		"Array result"	[for% i to: x length do%		[x•i ← self next].	⇑x]'.Stream understands: 'contents	[⇑(array•(1 to: position)) copy]'.
+Stream understands: 'skip: x	[position ← position+x]'.Stream understands: 'reset	[position ← 0]'.Stream understands: 'end	[⇑position≥limit]'.Stream understands: 'position	[⇑position]'.Stream understands: 'loc	"synonym for compiler"	[⇑position]'.Stream understands: 'empty	[⇑position=0]'.
+Stream understands: 'peek | x	[x← self next⇒ [position ← position-1.  ⇑x]		"peek at next element"	⇑false]'.Stream understands: '∢ x | y	[y← self next⇒		"peek for matching element"		[x=y⇒ [⇑y]		"gobble it if found"		position ← position-1. ⇑false]	⇑false]'.
+Stream understands: 'pop		"use it as a LIFO"	[position<1⇒ [⇑false]	position ← position-1. ⇑array•(position+1)]'.Stream understands: 'pop: n | t	[position<n⇒ [⇑false]	t ← self last: n.	position ← position-n. ⇑t]'.
+Stream understands: 'last	[⇑array•position]'.Stream understands: 'last: n	[⇑(array•(position-n+1 to: position)) copy]'.
+Stream understands: 'dequeue		"use it as a FIFO"	[⇑self dequeue: 1]'.Stream understands: 'dequeue: n | t	[position<n⇒ [⇑false]	t ← (array•(1 to: n)) copy.	array•(1 to: position-n) ← array•(n+1 to: position).	position ← position-n. ⇑t]'.
+Stream understands: 'upto: x | y s	[s ← Stream default.	until% [x = (y ← self next)] do%		[s next ← y].	self skip: ‾1.  ⇑s contents]'.
+Stream understands: '• x ← val	[⇑array•x ← val]'.Stream understands: '• x	[⇑array•x]'.
+Stream understands: 'space	[self next ← 040]'.Stream understands: 'tab	[self next ← 011]'.Stream understands: 'cr	[self next ← 015]'.
+Stream understands: 'print: obj	[obj printon: self]'.
+Stream understands: 'asStream'.Stream understands: 'asVector	[⇑(Reader new of: self) read]'.
+
+"GRAPHICAL OBJECTS"
+
+"(Point, Rectangle, Turtle skipped)"
+"(Textframe, Paragraph, TextStyle, Dispframe skipped)"
+
+"SETS AND DICTIONARIES"
+
+HasGUI? [user show: 'HashSet, '; flush].
+
+"Class new title: 'HashSet';	fields: 'objects'"
+HashSet understands: 'default	[self init: 4]'.	"default initial size"HashSet understands: 'init	[self init: 4]'.	"obsolete"HashSet understands: 'init: size	[objects ← Vector new: (size max: 4)]'.
+HashSet understands: 'insert: obj | i	[self findorinsert: obj. ⇑obj]'.HashSet understands: 'has: obj	[self find: obj⇒ [⇑true] ⇑false]'.HashSet understands: 'findorinsert: obj | i		"insert if not found, "	[i ← self findornil: obj⇒ [objects•i ← obj. ⇑i]	self growto: objects length*2.	"may cause table to grow"	⇑self findorinsert: obj]'.HashSet understands: 'find: obj | i	"⇑index if found, else false"	[i ← self findornil: obj⇒		[objects•i≡nil⇒ [⇑false] ⇑i]	⇑false]'.HashSet understands: 'findornil: obj | i loc	"⇑index if found or if room, else false"	[loc ← obj hash\objects length+1.	"does this match the ucode"	objects•loc ≡ nil⇒ [⇑loc]	objects•loc = obj⇒ [⇑loc]	"first probe cheap"	for% i to: (4 max: objects length / 4) do%		[loc ← loc\objects length+1.		"better delta later if necess"		objects•loc ≡ nil⇒ [⇑loc]		objects•loc = obj⇒ [⇑loc]]	⇑false]'.
+HashSet understands: 'delete: obj | i	[i ← self find: obj⇒		[objects•i ← nil.	"delete, then rehash"		⇑self growto: objects length]]'.	"returns result of growto"
+HashSet understands: 'growto: size | copy i	[copy ← self class new init: size.	"create a copy"	for% i from: self do%		[copy insert: i]	"hash each entry into it"	objects ← copy objects]		"then take on all its state"'.
+HashSet understands: 'objects [⇑objects]'.HashSet understands: 'objects← objects'.
+HashSet understands: 'contents | obj strm	[strm ← (Vector new: objects length) asStream.	for% obj from: objects do%		[obj≡nil⇒ [] strm next← obj]	⇑strm contents]'.HashSet understands: 'asStream	[⇑self contents asStream]'.
+HashSet understands: 'notthere: name	[user notify: name asString+'' not found.'']'.
+
+HasGUI? [user show: 'Dictionary, '; flush].
+
+"Class new title: 'Dictionary';	subclassof: HashSet;	fields: 'values'""Dictionaries have the same lookup properties as Sets, except that they also associate a value with each object present."
+Dictionary understands: 'init: size	[values ← Vector new: size. super init: size]'.
+Dictionary understands: 'insert: name with: value	[self insert: name.  values•(self find: name) ← value]'.Dictionary understands: '• name | x	[x ← self find: name⇒ [⇑values•x]	self notthere: name]'.Dictionary understands: '• name ← value | x	[x ← self find: name⇒ [⇑values•x ← value]	self notthere: name]'.Dictionary understands: 'lookup: name | x	[x ← self find: name⇒ [⇑values•x] ⇑false]'.
+Dictionary understands: 'growto: size | name copy	[copy ← self class new init: size.	"create a copy of the new size"	for% name from: self do%		[copy insert: name with: self•name]	"hash each entry into it"	self copyfrom: copy]'.	"then take on all its state"Dictionary understands: 'copyfrom: dict	[self objects ← dict objects copy.	values ← dict values copy]'.
+Dictionary understands: 'values [⇑values]'.
+Dictionary understands: 'clean | name	"release unreferenced entries"	[for% name from: self do%		"slick, huh"		[(self•name) refct = 1 ⇒ [self delete: name]]]'.
+
+Dictionary understands: 'insertall: names with: vals | i		"insert many entries"	[for% i to: names length do%		[self insert: names•i with: vals•i]]'.Dictionary understands: 'insertall: names		"default value is nil"	[self insertall: names with: (Vector new: names length)]'.
+
+HasGUI? [user show: 'SymbolTable, '; flush].
+
+"Class new title: 'SymbolTable';	subclassof: Dictionary;	fields:''""SymbolTables have the same properties as Dictionaries, except that an indirect reference is interposed between the value entries and the actual values.  This allows compiled code to point directly at a reference which remains valid although the value changes.  Notice that the define message checks in Undefined for unresolved references which the compiler may have placed there previously."
+SymbolTable understands: 'insert: name with: x	[super insert: name with: (ObjectReference new value← x)]'.SymbolTable understands: '• name	[⇑(super•name) value]'.SymbolTable understands: '• name ← x	[⇑(super•name) value ← x]'.SymbolTable understands: 'ref: name	[⇑super•name]'.
+SymbolTable understands: 'define: name as: x	[self has: name⇒ [self•name ← x]	Undeclared has: name⇒		[super insert: name with: (Undeclared ref: name).		self•name ← x.		Undeclared delete: name]	self insert: name with: x]'.
+
+HasGUI? [user show: 'MessageDict, '; flush].
+
+"Class new title: 'MessageDict';	subclassof: HashSet;	fields: 'methods ""<Vector of Strings> which are the compiled methods for each message""		literals ""<Vector of Vectors> which hold pointers to literals used in the methods""		code ""<Vector of Strings> which are the source text for each message""		backpointers ""<Vector of Vectors> which are the tables of text location vs pc for each message""'.""Note that insertion and deletion return the updated dictionary.  This is because Smalltalk may be executing out of the dictionary.  The final switch to the new dictionary is made in Class with one atomic assignment."
+
+"hh NOTE: literals has been taken out, Methods themselves keep their literals alive"
+MessageDict understands: 'init: size	[methods ← Vector new: size.  "literals ← Vector new: size."	code ← Vector new: size.  	backpointers ← Vector new: size.	super init: size]'.
+MessageDict understands: 'insert: name method: m literals: l		code: c backpointers: b | i copy	[i ← self findornil: name⇒		"if name is already there"		[methods•i ← m. "literals•i ← l." code•i ← c. backpointers•i ← b.		self objects•i ← name]		"then do it, and return self"	copy ← self growto: methods length*2.		"Otherwise, copy"	copy insert: name method: m literals: l			code: c backpointers: b.	"and insert"	⇑copy]		"and return the new dict without altering old"'.
+MessageDict understands: 'method: name	[⇑methods•(self find: name)]'.MessageDict understands: 'literals: name	[⇑(self method: name) literals	"hh, was: literals•(self find: name)"]'.MessageDict understands: 'code: name	[⇑code•(self find: name)]'.MessageDict understands: 'backpointers: name	[⇑backpointers•(self find: name)]'.
+MessageDict understands: 'growto: size | name copy i	[copy ← self class new init: size.	"create a copy of the new size"	for% name from: self do%		[i ← self find: name.	"hash each entry into it"		copy insert: name method: methods•i literals: nil "hh, was: literals•i"				code: code•i backpointers: backpointers•i]	⇑copy]		"copy new parts"'.
+
+"INDIRECT REFERENCES"
+
+HasGUI? [user show: 'ObjectReference.'; flush].
+
+"Class new title: 'ObjectReference'	fields: 'object'"
+ObjectReference understands: 'value [⇑object]'.ObjectReference understands: 'value ← object'.
+ObjectReference understands: 'printon: strm	[strm append: ''->''; space; print: object class]'.
+
+"(FieldReference skipped)"
+
+"READ ROUTINE"
+
+Host let: Reader understand: #of:
+	via: (Host method: 'of' in: Reader).
+Host let: Reader understand: #read
+	via: (Host method: 'read' in: Reader)
+
+"BYTE COMPILER"
+
+Host let: Compiler understand: #compile:in:
+	via: (Host method: 'compileIn' in: Compiler)	Host load: 'jar:/source/postboot.utf.txt'
+HasGUI? [user cr; show: 'All done.'; cr].
