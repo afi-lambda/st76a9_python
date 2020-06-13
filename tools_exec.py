@@ -203,7 +203,7 @@ def simulator_evaluate(expression):
 def simulator_jevaluate(source, evaluation_list):
     evaluation_dictionary = {}
     evaluation_list.append(evaluation_dictionary)
-    evaluation_dictionary['source'] = str(source.encode('ascii', 'backslashreplace'))
+    evaluation_dictionary['source'] = source
     altoSource = Transcoder.toAlto("doIt [^[" + source + "]]")
     evaluation_dictionary['alto_source'] = altoSource
     evaluation_dictionary['lexem'] = ByteString(altoSource).asVector().toString()
