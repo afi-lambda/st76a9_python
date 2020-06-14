@@ -196,7 +196,6 @@ def simulator_evaluate(expression):
     objectCls = Runtime.Smalltalk._ref(UniqueString._for("Object"))
     method_tuple = Compiler().compileIn(ByteString(altoSource), objectCls)
     method = method_tuple._ref(Integer(2))
-    # print [each for each in method.codes().fBytes]
     result = Simulator(Context(None, None, objectCls, method)).run()
     print(expression, "=>", result)
 
@@ -206,7 +205,6 @@ def simulator_jevaluate(source, evaluation_list):
     evaluation_dictionary['source'] = source
     altoSource = Transcoder.toAlto("doIt [^[" + source + "]]")
     evaluation_dictionary['alto_source'] = altoSource
-    evaluation_dictionary['lexem'] = ByteString(altoSource).asVector().toString()
     evaluation_dictionary['lexem'] = ([each if isinstance(each, int)else each.toString() for each in ByteString(altoSource).asVector().elements()])
     objectCls = Runtime.Smalltalk._ref(UniqueString._for("Object"))
     method_tuple = Compiler().compileIn(ByteString(altoSource), objectCls)
@@ -215,7 +213,9 @@ def simulator_jevaluate(source, evaluation_list):
     method = method_tuple._ref(Integer(2))
     return Simulator(JContext().set(None, Obj.NIL, objectCls, method)).run()
 
-def simulator_evaluateAll(fileRef, evaluation_list=[]):
+def simulator_evaluateAll(fileRef, evaluation_list=None):
+    if evaluation_list is None:
+        evaluation_list = []
     ci = fileRef.chunks()
     while ci.hasMoreChunks():
         chunk = ci.nextChunk()
