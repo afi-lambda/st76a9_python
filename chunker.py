@@ -10,7 +10,10 @@ class Chunker:
         while True:
             line = self.file.readline()
             if line == '':
-                raise StopIteration
+                if chunk == '':
+                    raise StopIteration
+                else:
+                    return chunk.rstrip()
             if line.isspace():
                 return chunk.rstrip()
             else:
