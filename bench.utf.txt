@@ -1,0 +1,31 @@
+Host installPrimitive: (Host class: 'st76.tools.TimerPrimitive') as: 129.
+Integer understands: 'time [] primitive: 129	"millisecond snapshot"'.
+
+Integer understands: 'time% ctx | t0
+	[t0 _ self time. ctx eval. ^self time-t0]'.
+
+Integer understands: 'benchFib
+	[self<2? [^1]
+	^(self-1) benchFib + (self-2) benchFib + 1]'.
+
+Integer understands: 'benchmark | size flags prime k count iter i
+	[size _ 8190.
+	for% iter to: self do%
+		[count _ 0. flags _ (Vector new: size) all _ true.
+		for% i to: size do%
+			[flags•i?
+				[prime _ i+1. k _ i+prime.
+				while% (k ≤ size) do% [flags•k _ false. k _ k+prime].
+				count _ count+1]]].
+	^count]'.
+
+Integer understands: 'tinyBenchmarks | t1 t2 r n1 n2
+	[n1 _ 1.
+	while% [t1 _ self time% (n1 benchmark). t1<1000]
+		do% [n1 _ n1*2].
+	n2 _ 28.
+	while% [t2 _ self time% (r _ n2 benchFib). t2<1000]
+		do% [n2 _ n2+1].
+	^( (n1 asFloat * 5.0e8 / t1) asInteger,
+	   (r asFloat * 1000 / t2) asInteger,
+	   (n1, n2) )]'.

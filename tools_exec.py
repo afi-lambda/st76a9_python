@@ -2,6 +2,9 @@ from __future__ import print_function
 
 import json
 import os
+
+from chunker import Chunker
+
 os.environ['CLASSPATH'] = 'st76a9.jar'
 from jnius import autoclass
 from jnius import JavaException
@@ -213,26 +216,25 @@ def simulator_jevaluate(source, evaluation_list):
     method = method_tuple._ref(Integer(2))
     return Simulator(JContext().set(None, Obj.NIL, objectCls, method)).run()
 
-def simulator_evaluateAll(fileRef, evaluation_list=None):
+def simulator_evaluateAll(file, evaluation_list=None):
     if evaluation_list is None:
         evaluation_list = []
-    ci = fileRef.chunks()
-    while ci.hasMoreChunks():
-        chunk = ci.nextChunk()
-        simulator_jevaluate(chunk, evaluation_list)
+    chunker = Chunker(file)
+    for each_chunk in chunker:
+        simulator_jevaluate(each_chunk, evaluation_list)
 
 def exec_main():
     Runtime.initialize()
     HostSystemBuilder.defineClasses()
     HostSystemBuilder.defineBootSupport()
     Runtime.Smalltalk.defineAs(UniqueString._for("HasGUI"), Obj.FALSE)
-    ref = SourcecodeRef.create('jar:/source/bootstrap.utf.txt', Exec)
     evaluation_list = []
-    simulator_evaluateAll(ref, evaluation_list)
+    with open('bootstrap.utf.txt', encoding='utf-8') as file:
+        simulator_evaluateAll(file, evaluation_list)
     with open('evaluation.json', 'w') as json_file:
         json.dump(evaluation_list, json_file, indent=4)
-    ref = SourcecodeRef.create('jar:/source/bench.utf.txt', Exec)
-    simulator_evaluateAll(ref)
+    with open('bench.utf.txt', encoding='utf-8') as file:
+        simulator_evaluateAll(file)
     simulator_evaluate('3 + 4')
     simulator_evaluate('3 - 4')
     simulator_evaluate('1 benchFib')
