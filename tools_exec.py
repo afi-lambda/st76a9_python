@@ -4,6 +4,7 @@ import json
 import os
 
 from chunker import Chunker
+from transcoder import Transcoder
 
 os.environ['CLASSPATH'] = 'st76a9.jar'
 from jnius import autoclass
@@ -18,7 +19,7 @@ UniqueString = autoclass('st76.runtime.UniqueString')
 Obj = autoclass('st76.runtime.Obj')
 # Exec = autoclass('st76.tools.Exec')
 # SourcecodeRef = autoclass('st76.io.SourcecodeRef')
-Transcoder = autoclass('st76.io.Transcoder')
+# Transcoder = autoclass('st76.io.Transcoder')
 Compiler = autoclass('st76.compiler.Compiler')
 ByteString = autoclass('st76.runtime.ByteString')
 # Int = autoclass('st76.runtime.Int')
@@ -213,7 +214,7 @@ def simulator_jevaluate(source, evaluation_list):
     evaluation_dictionary = {}
     evaluation_list.append(evaluation_dictionary)
     evaluation_dictionary['source'] = source
-    alto_source = Transcoder.toAlto("doIt [^[" + source + "]]")
+    alto_source = Transcoder.to_alto("doIt [^[" + source + "]]")
     evaluation_dictionary['alto_source'] = alto_source
     evaluation_dictionary['lexem'] = (
     [each if isinstance(each, int) else each.toString() for each in ByteString(alto_source).asVector().elements()])
