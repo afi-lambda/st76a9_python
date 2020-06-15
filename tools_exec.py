@@ -8,6 +8,7 @@ from chunker import Chunker
 os.environ['CLASSPATH'] = 'st76a9.jar'
 from jnius import autoclass
 from jnius import JavaException
+
 # from binascii import b2a_hex
 
 
@@ -15,15 +16,17 @@ Runtime = autoclass('st76.runtime.Runtime')
 HostSystemBuilder = autoclass('st76.simulator.host.HostSystemBuilder')
 UniqueString = autoclass('st76.runtime.UniqueString')
 Obj = autoclass('st76.runtime.Obj')
-Exec = autoclass('st76.tools.Exec')
-SourcecodeRef = autoclass('st76.io.SourcecodeRef')
+# Exec = autoclass('st76.tools.Exec')
+# SourcecodeRef = autoclass('st76.io.SourcecodeRef')
 Transcoder = autoclass('st76.io.Transcoder')
 Compiler = autoclass('st76.compiler.Compiler')
 ByteString = autoclass('st76.runtime.ByteString')
-Int = autoclass('st76.runtime.Int')
+# Int = autoclass('st76.runtime.Int')
 Integer = autoclass('java.lang.Integer')
 JContext = autoclass('st76.simulator.Context')
-Disassembler = autoclass('st76.tools.Disassembler')
+
+
+# Disassembler = autoclass('st76.tools.Disassembler')
 
 
 class Simulator:
@@ -50,6 +53,7 @@ class Simulator:
 class ReturnValue(Exception):
     def __init__(self, value):
         self.value = value
+
 
 class Context:
 
@@ -97,7 +101,7 @@ class Context:
         if hibits == 2:
             self.push(self.method.literal(lobits))
         elif hibits == 7:
-            if (lobits == 1):
+            if lobits == 1:
                 self.push(self.receiver)
             else:
                 self.push(self.constants[(lobits - 8)])
@@ -126,7 +130,7 @@ class Context:
 
     def push(self, value):
         self.sp += 1
-        self.temp_frame[(self.sp)] = value
+        self.temp_frame[self.sp] = value
 
     def top(self):
         return self.temp_frame[self.sp]
@@ -162,7 +166,7 @@ class Context:
         callee = Context(self, self.pop(), top_class, method)
         p = method.numArgs() - 1
         # target_frame = callee.temp_frame
-        while (p >= 0):
+        while p >= 0:
             # targetFrame[(p)] = pop()
             p -= 1
         # print "method", method.toString()
@@ -177,51 +181,57 @@ class Context:
         primitive = method.primitive()
         # print "primitive", primitive
         if primitive == 6:
-            result = self.temp_frame[self.sp] + self.temp_frame[self.sp-1]
+            result = self.temp_frame[self.sp] + self.temp_frame[self.sp - 1]
             self.pop2push(result)
             return self
         elif primitive == 7:
-            result = self.temp_frame[self.sp] - self.temp_frame[self.sp-1]
+            result = self.temp_frame[self.sp] - self.temp_frame[self.sp - 1]
             self.pop2push(result)
             return self
         elif primitive == 8:
-            result = self.temp_frame[self.sp] < self.temp_frame[self.sp-1]
+            result = self.temp_frame[self.sp] < self.temp_frame[self.sp - 1]
             self.pop2push(result)
             return self
         raise Exception("primitive implementation not finished")
+
 
 class EscapeAll(bytes):
     def __str__(self):
         return 'b\'{}\''.format(''.join('\\x{:02x}'.format(b) for b in self))
 
+
 def simulator_evaluate(expression):
-    altoSource = Transcoder.toAlto("doIt [^[" + expression + "]]")
-    objectCls = Runtime.Smalltalk._ref(UniqueString._for("Object"))
-    method_tuple = Compiler().compileIn(ByteString(altoSource), objectCls)
+    alto_source = Transcoder.to_alto("doIt [^[" + expression + "]]")
+    object_cls = Runtime.Smalltalk._ref(UniqueString._for("Object"))
+    method_tuple = Compiler().compileIn(ByteString(alto_source), object_cls)
     method = method_tuple._ref(Integer(2))
-    result = Simulator(Context(None, None, objectCls, method)).run()
+    result = Simulator(Context(None, None, object_cls, method)).run()
     print(expression, "=>", result)
+
 
 def simulator_jevaluate(source, evaluation_list):
     evaluation_dictionary = {}
     evaluation_list.append(evaluation_dictionary)
     evaluation_dictionary['source'] = source
-    altoSource = Transcoder.toAlto("doIt [^[" + source + "]]")
-    evaluation_dictionary['alto_source'] = altoSource
-    evaluation_dictionary['lexem'] = ([each if isinstance(each, int)else each.toString() for each in ByteString(altoSource).asVector().elements()])
-    objectCls = Runtime.Smalltalk._ref(UniqueString._for("Object"))
-    method_tuple = Compiler().compileIn(ByteString(altoSource), objectCls)
+    alto_source = Transcoder.toAlto("doIt [^[" + source + "]]")
+    evaluation_dictionary['alto_source'] = alto_source
+    evaluation_dictionary['lexem'] = (
+    [each if isinstance(each, int) else each.toString() for each in ByteString(alto_source).asVector().elements()])
+    object_cls = Runtime.Smalltalk._ref(UniqueString._for("Object"))
+    method_tuple = Compiler().compileIn(ByteString(alto_source), object_cls)
     evaluation_dictionary['selector'] = method_tuple._ref(Integer(1)).toString()
     evaluation_dictionary['codes '] = str(EscapeAll(bytes(method_tuple._ref(Integer(2)).codes().fBytes)))
     method = method_tuple._ref(Integer(2))
-    return Simulator(JContext().set(None, Obj.NIL, objectCls, method)).run()
+    return Simulator(JContext().set(None, Obj.NIL, object_cls, method)).run()
 
-def simulator_evaluateAll(file, evaluation_list=None):
+
+def simulator_evaluate_all(file, evaluation_list=None):
     if evaluation_list is None:
         evaluation_list = []
     chunker = Chunker(file)
     for each_chunk in chunker:
         simulator_jevaluate(each_chunk, evaluation_list)
+
 
 def exec_main():
     Runtime.initialize()
@@ -230,15 +240,16 @@ def exec_main():
     Runtime.Smalltalk.defineAs(UniqueString._for("HasGUI"), Obj.FALSE)
     evaluation_list = []
     with open('bootstrap.utf.txt', encoding='utf-8') as file:
-        simulator_evaluateAll(file, evaluation_list)
+        simulator_evaluate_all(file, evaluation_list)
     with open('evaluation.json', 'w') as json_file:
         json.dump(evaluation_list, json_file, indent=4)
     with open('bench.utf.txt', encoding='utf-8') as file:
-        simulator_evaluateAll(file)
+        simulator_evaluate_all(file)
     simulator_evaluate('3 + 4')
     simulator_evaluate('3 - 4')
     simulator_evaluate('1 benchFib')
     simulator_evaluate('5 benchFib')
+
 
 if __name__ == '__main__':
     exec_main()
