@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import json
 import os
 
@@ -217,7 +215,7 @@ def simulator_jevaluate(source, evaluation_list):
     alto_source = Transcoder.to_alto("doIt [^[" + source + "]]")
     evaluation_dictionary['alto_source'] = alto_source
     evaluation_dictionary['lexem'] = (
-    [each if isinstance(each, int) else each.toString() for each in ByteString(alto_source).asVector().elements()])
+        [each if isinstance(each, int) else each.toString() for each in ByteString(alto_source).asVector().elements()])
     object_cls = Runtime.Smalltalk._ref(UniqueString._for("Object"))
     method_tuple = Compiler().compileIn(ByteString(alto_source), object_cls)
     evaluation_dictionary['selector'] = method_tuple._ref(Integer(1)).toString()
