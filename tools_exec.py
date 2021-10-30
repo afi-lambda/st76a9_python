@@ -99,6 +99,8 @@ class Context:
         hibits = byte_code >> 4
         if hibits == 2:
             self.push(self.method.literal(lobits))
+        elif hibits == 4:
+            self.push(self.method.literal(lobits).value())
         elif hibits == 7:
             if lobits == 1:
                 self.push(self.receiver)
