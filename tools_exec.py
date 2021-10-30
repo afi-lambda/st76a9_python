@@ -164,7 +164,10 @@ class Context:
                 # print "return result"
                 return result
         # it's not a primitive
-        callee = Context(self, self.pop(), top_class, method)
+        if method.getClass().toString() == 'class st76.simulator.host.HostMethod':
+            exit(255)
+        else:
+            callee = Context(self, self.pop(), top_class, method)
         p = method.numArgs() - 1
         # target_frame = callee.temp_frame
         while p >= 0:
