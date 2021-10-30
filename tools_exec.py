@@ -11,21 +11,21 @@ from jnius import JavaException
 # from binascii import b2a_hex
 
 
-Runtime = autoclass('st76.runtime.Runtime')
-HostSystemBuilder = autoclass('st76.simulator.host.HostSystemBuilder')
-UniqueString = autoclass('st76.runtime.UniqueString')
-Obj = autoclass('st76.runtime.Obj')
+JRuntime = autoclass('st76.runtime.Runtime')
+JHostSystemBuilder = autoclass('st76.simulator.host.HostSystemBuilder')
+JUniqueString = autoclass('st76.runtime.UniqueString')
+JObj = autoclass('st76.runtime.Obj')
 # Exec = autoclass('st76.tools.Exec')
 # SourcecodeRef = autoclass('st76.io.SourcecodeRef')
 # Transcoder = autoclass('st76.io.Transcoder')
-Compiler = autoclass('st76.compiler.Compiler')
-ByteString = autoclass('st76.runtime.ByteString')
+JCompiler = autoclass('st76.compiler.Compiler')
+JByteString = autoclass('st76.runtime.ByteString')
 # Int = autoclass('st76.runtime.Int')
-Integer = autoclass('java.lang.Integer')
+JInteger = autoclass('java.lang.Integer')
 JContext = autoclass('st76.simulator.Context')
 
 
-# Disassembler = autoclass('st76.tools.Disassembler')
+# JDisassembler = autoclass('st76.tools.Disassembler')
 
 
 class Simulator:
@@ -73,9 +73,9 @@ class Context:
         self.temp_frame = [None] * method.tempFrameSize()
         self.pc = method.startPC() - 1
         self.sp = method.startSP() - 1
-        plus_symbol = UniqueString._for("+")
-        minus_symbol = UniqueString._for("-")
-        lt_symbol = UniqueString._for("<")
+        plus_symbol = JUniqueString._for("+")
+        minus_symbol = JUniqueString._for("-")
+        lt_symbol = JUniqueString._for("<")
         self.special_selectors = [plus_symbol, minus_symbol, lt_symbol]
         self.constants = [None] * 16
         self.constants[0] = -1
@@ -83,9 +83,9 @@ class Context:
         self.constants[2] = 1
         self.constants[3] = 2
         self.constants[4] = 10
-        self.constants[5] = Obj.NIL
-        self.constants[6] = Obj.FALSE
-        self.constants[7] = Obj.TRUE
+        self.constants[5] = JObj.NIL
+        self.constants[6] = JObj.FALSE
+        self.constants[7] = JObj.TRUE
 
     def next_byte(self):
         self.pc += 1
@@ -144,7 +144,7 @@ class Context:
         # top = self.top()
         # print "self.top()", top
         # print "type(self.top())", type(self.top())
-        top_class = Obj.cls(Integer(3))
+        top_class = JObj.cls(Integer(3))
         # print "top_class.toString()", top_class.toString()
         search_class = top_class
         method = search_class._lookup(selector)
@@ -201,9 +201,9 @@ class EscapeAll(bytes):
 
 def simulator_evaluate(expression):
     alto_source = Transcoder.to_alto("doIt [^[" + expression + "]]")
-    object_cls = Runtime.Smalltalk._ref(UniqueString._for("Object"))
-    method_tuple = Compiler().compileIn(ByteString(alto_source), object_cls)
-    method = method_tuple._ref(Integer(2))
+    object_cls = JRuntime.Smalltalk._ref(JUniqueString._for("Object"))
+    method_tuple = JCompiler().compileIn(JByteString(alto_source), object_cls)
+    method = method_tuple._ref(JInteger(2))
     result = Simulator(Context(None, None, object_cls, method)).run()
     print(expression, "=>", result)
 
@@ -215,13 +215,13 @@ def simulator_jevaluate(source, evaluation_list):
     alto_source = Transcoder.to_alto("doIt [^[" + source + "]]")
     evaluation_dictionary['alto_source'] = alto_source
     evaluation_dictionary['lexem'] = (
-        [each if isinstance(each, int) else each.toString() for each in ByteString(alto_source).asVector().elements()])
-    object_cls = Runtime.Smalltalk._ref(UniqueString._for("Object"))
-    method_tuple = Compiler().compileIn(ByteString(alto_source), object_cls)
-    evaluation_dictionary['selector'] = method_tuple._ref(Integer(1)).toString()
-    evaluation_dictionary['codes '] = str(EscapeAll(bytes(method_tuple._ref(Integer(2)).codes().fBytes)))
-    method = method_tuple._ref(Integer(2))
-    return Simulator(JContext().set(None, Obj.NIL, object_cls, method)).run()
+        [each if isinstance(each, int) else each.toString() for each in JByteString(alto_source).asVector().elements()])
+    object_cls = JRuntime.Smalltalk._ref(JUniqueString._for("Object"))
+    method_tuple = JCompiler().compileIn(JByteString(alto_source), object_cls)
+    evaluation_dictionary['selector'] = method_tuple._ref(JInteger(1)).toString()
+    evaluation_dictionary['codes '] = str(EscapeAll(bytes(method_tuple._ref(JInteger(2)).codes().fBytes)))
+    method = method_tuple._ref(JInteger(2))
+    return Simulator(JContext().set(None, JObj.NIL, object_cls, method)).run()
 
 
 def simulator_evaluate_all(file, evaluation_list=None):
@@ -233,10 +233,10 @@ def simulator_evaluate_all(file, evaluation_list=None):
 
 
 def exec_main():
-    Runtime.initialize()
-    HostSystemBuilder.defineClasses()
-    HostSystemBuilder.defineBootSupport()
-    Runtime.Smalltalk.defineAs(UniqueString._for("HasGUI"), Obj.FALSE)
+    JRuntime.initialize()
+    JHostSystemBuilder.defineClasses()
+    JHostSystemBuilder.defineBootSupport()
+    JRuntime.Smalltalk.defineAs(JUniqueString._for("HasGUI"), JObj.FALSE)
     evaluation_list = []
     with open('bootstrap.utf.txt', encoding='utf-8') as file:
         simulator_evaluate_all(file, evaluation_list)
