@@ -224,7 +224,13 @@ def simulator_jevaluate(source, evaluation_list):
     return Simulator(JContext().set(None, JObj.NIL, object_cls, method)).run()
 
 
-def simulator_evaluate_all(file, evaluation_list=None):
+def simulator_evaluate_all(file):
+    chunker = Chunker(file)
+    for each_chunk in chunker:
+        simulator_evaluate(each_chunk)
+
+
+def simulator_jevaluate_all(file, evaluation_list=None):
     if evaluation_list is None:
         evaluation_list = []
     chunker = Chunker(file)
@@ -239,7 +245,7 @@ def exec_main():
     JRuntime.Smalltalk.defineAs(JUniqueString._for("HasGUI"), JObj.FALSE)
     evaluation_list = []
     with open('bootstrap.utf.txt', encoding='utf-8') as file:
-        simulator_evaluate_all(file, evaluation_list)
+        simulator_jevaluate_all(file, evaluation_list)
     with open('evaluation.json', 'w') as json_file:
         json.dump(evaluation_list, json_file, indent=4)
     with open('bench.utf.txt', encoding='utf-8') as file:
