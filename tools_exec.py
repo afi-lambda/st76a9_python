@@ -146,7 +146,7 @@ class Context:
         # top = self.top()
         # print "self.top()", top
         # print "type(self.top())", type(self.top())
-        top_class = JObj.cls(Integer(3))
+        top_class = JObj.cls(self.top())
         # print "top_class.toString()", top_class.toString()
         search_class = top_class
         method = search_class._lookup(selector)
